@@ -15,20 +15,33 @@ class HmsPatient(models.Model):
         string="Blood Type"
     )
     pcr = fields.Boolean(string="PCR Done")
-    image = fields.Binary(string="Image")
+    image = fields.Image(string="Image")
     address = fields.Text(string="Address")
     age = fields.Integer(string="Age")
 
-    @api.model
-    def create(self, vals):
-        # Custom logic during creation
-        return super(HmsPatient, self).create(vals)
+    department_id = fields.Many2one('hms.department', domain=[('is_opened', '=', True)])
+    doctor_ids = fields.Many2many('hms.doctors', string="Doctors", readonly=True)
+    state = fields.Selection([
+        ('undetermined', 'Undetermined'),
+        ('good', 'Good'),
+        ('fair', 'Fair'),
+        ('serious', 'Serious')
+    ], default='undetermined')
 
-    def write(self, vals):
-        # Custom logic during write
-        return super(HmsPatient, self).write(vals)
+    log_ids = fields.One2many('hms.patient.log', 'patient_id')
 
-    def unlink(self):
-        # Custom logic during deletion
-        return super(HmsPatient, self).unlink()
+    @api.onchange('state')
+    def _onchange_state(self):
+        for rec in self:
+            if rec.state:
+                rec.env['hms.patient.log'].create({
+                    'patient_id': rec.id,
+                    'description': f"State changed to {rec.state}"
+                })
 
+    @api.constrains('pcr', 'cr_ratio')
+    def _check_cr_ratio_required(self):
+        for rec in self:
+            if rec.pcr and not rec.cr_ratio:
+                raise ValidationError("CR Ratio must be set if PCR is checked.")
+    

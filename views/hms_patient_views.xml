@@ -16,7 +16,22 @@
                         <field name="image" widget="image"/>
                         <field name="address"/>
                         <field name="history"/>
+                        
+                    <field name="department_id"/>
+                    <field name="doctor_ids" widget="many2many_tags" readonly="1"/>
                     </group>
+
+                    <notebook>
+                    <page string="Logs">
+                        <field name="log_ids">
+                            <tree editable="bottom">
+                                <field name="created_by"/>
+                                <field name="date"/>
+                                <field name="description"/>
+                            </tree>
+                        </field>
+                    </page>
+                </notebook>
                 </sheet>
             </form>
         </field>
@@ -43,4 +58,6 @@
 
     <menuitem id="menu_hms_root" name="HMS"/>
     <menuitem id="menu_hms_patients" name="Patients" parent="menu_hms_root" action="action_hms_patient"/>
+    <menuitem id="menu_doctors" name="Doctors" parent="menu_hms_root" action="action_hms_doctor"/>
+    <menuitem id="menu_department" name="Departments" parent="menu_hms_root" action="action_hms_department"/>
 </odoo>
