@@ -30,6 +30,8 @@ class HmsPatient(models.Model):
 
     log_ids = fields.One2many('hms.patient.log', 'patient_id')
 
+    email = fields.Char(string="Email", unique=True)
+
     @api.onchange('state')
     def _onchange_state(self):
         for rec in self:
@@ -44,4 +46,21 @@ class HmsPatient(models.Model):
         for rec in self:
             if rec.pcr and not rec.cr_ratio:
                 raise ValidationError("CR Ratio must be set if PCR is checked.")
-    
+    @api.onchange('age')
+    def _onchange_age(self):
+        for rec in self:
+            if rec.age < 30:
+                rec.pcr = True
+
+    @api.depends('birth_date')
+    def _compute_age(self):
+        for rec in self:
+            if rec.birth_date:
+                rec.age = (fields.Date.today() - rec.birth_date).days // 365
+
+    @api.constrains('email')
+    def _check_email(self):
+        for rec in self:
+            if rec.email:
+                if '@' not in rec.email:
+                    raise ValidationError("Invalid email format.")
